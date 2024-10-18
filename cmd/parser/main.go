@@ -4,6 +4,10 @@ import (
 	"flag"
 	"fmt"
 	"os"
+
+	"nginx-reports/internal/parser"
+	"nginx-reports/internal/storage"
+	"nginx-reports/internal/writers"
 )
 
 func main() {
@@ -18,22 +22,24 @@ func main() {
 		os.Exit(1)
 	}
 
+	reportData := parser.ParseLogs(*logDirFlag)
+
 	fmt.Println("Generating report ...")
 
 	switch *outputFlag {
 	case "stdout":
-        fmt.Println("Write to stdout")
+		writers.WriteToStdout(reportData)
 	case "json":
-        fmt.Println("Write to JSON file")
+		writers.WriteJSON(reportData)
 	case "html":
-        fmt.Println("Write to HTML file")
+		writers.WriteHTML(reportData)
 	default:
 		fmt.Fprintf(os.Stderr, "Error: invalid output option %s\n", *outputFlag)
 		os.Exit(1)
 	}
 
 	if *persistFlag != "" {
-        fmt.Println("Save data to SQLite")
+		storage.StoreDB(reportData)
 	}
 
 	fmt.Println("Report complete!")
